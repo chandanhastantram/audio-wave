@@ -7,12 +7,24 @@
   background: var(--black);
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .player-container {
   max-width: 850px;
   width: 100%;
   background: var(--dark);
   border: 1px solid #1e90ff;
   padding: 35px;
+  animation: fadeIn 0.5s ease;
 }
 
 .app-title {
@@ -87,6 +99,7 @@
   margin: 25px 0;
   display: flex;
   justify-content: center;
+  animation: fadeIn 0.6s ease;
 }
 
 .track-image {
@@ -94,11 +107,17 @@
   max-width: 400px;
   height: auto;
   border: 2px solid var(--blue);
+  transition: transform 0.3s ease;
+}
+
+.track-image:hover {
+  transform: scale(1.02);
 }
 
 .track-info {
   text-align: center;
   margin: 25px 0;
+  animation: fadeIn 0.7s ease;
 }
 
 .track-title {
@@ -124,6 +143,7 @@
   align-items: center;
   gap: 20px;
   margin: 30px 0;
+  animation: fadeIn 0.8s ease;
 }
 
 .control-btn {
@@ -135,6 +155,13 @@
   align-items: center;
   justify-content: center;
   border: 1px solid var(--blue);
+  transition: all 0.3s ease;
+}
+
+.control-btn:hover {
+  transform: scale(1.1);
+  border-color: var(--cyan);
+  color: var(--cyan);
 }
 
 .control-btn svg {
@@ -164,12 +191,13 @@
   gap: 12px;
   margin: 25px 0;
   justify-content: center;
+  animation: fadeIn 0.9s ease;
 }
 
 .volume-icon {
   width: 22px;
   height: 22px;
-  color: var(--blue);
+  color: #ff6b35;
 }
 
 .volume-bar {
@@ -183,7 +211,7 @@
 
 .volume-bar::-webkit-slider-track {
   background: #333;
-  border: 1px solid var(--blue);
+  border: 1px solid #ff6b35;
   height: 6px;
   border-radius: 3px;
 }
@@ -191,31 +219,33 @@
 .volume-bar::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  background: var(--cyan);
-  border: 2px solid var(--blue);
+  background: #ff6b35;
+  border: 2px solid #ff8c5a;
   height: 18px;
   width: 18px;
   border-radius: 50%;
   margin-top: -6px;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .volume-bar::-webkit-slider-thumb:hover {
-  background: #00ff88;
-  transform: scale(1.1);
+  background: #ff8c5a;
+  transform: scale(1.2);
+  box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
 }
 
 /* Firefox */
 .volume-bar::-moz-range-track {
   background: #333;
-  border: 1px solid var(--blue);
+  border: 1px solid #ff6b35;
   height: 6px;
   border-radius: 3px;
 }
 
 .volume-bar::-moz-range-thumb {
-  background: var(--cyan);
-  border: 2px solid var(--blue);
+  background: #ff6b35;
+  border: 2px solid #ff8c5a;
   height: 18px;
   width: 18px;
   border-radius: 50%;
@@ -228,6 +258,7 @@
   padding-top: 25px;
   max-height: 400px;
   overflow-y: auto;
+  animation: fadeIn 1s ease;
 }
 
 .playlist-title {
@@ -255,12 +286,16 @@
   background: var(--black);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .playlist-item:hover {
   border-color: var(--blue);
+  transform: translateX(5px);
+  background: rgba(30, 144, 255, 0.05);
 }
+
+
 
 .playlist-item.active {
   border-color: var(--blue);
