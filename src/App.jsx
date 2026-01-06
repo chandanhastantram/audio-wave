@@ -12,8 +12,8 @@ function App() {
   const [error, setError] = useState('');
   const playerRef = useRef(null);
 
-  // YouTube API Key from environment variable
-  const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
+  // YouTube API Key from environment variable with fallback
+  const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || 'AIzaSyA-xsEx80oNfIYNjXBDC6t1IGxwQIQPsvs';
 
   // Load default tracks on mount
   useEffect(() => {
