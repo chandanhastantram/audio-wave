@@ -13,50 +13,53 @@ function App() {
   const [searching, setSearching] = useState(false);
   const audioRef = useRef(null);
 
-  const CLIENT_ID = '95f22ed4'; // Jamendo API client ID
-
   // Load default tracks on mount
   useEffect(() => {
-    loadDefaultTracks();
+    searchTracks('popular songs');
   }, []);
 
-  const loadDefaultTracks = async () => {
-    setSearching(true);
-    try {
-      const response = await fetch(
-        `https://api.jamendo.com/v3.0/tracks/?client_id=${CLIENT_ID}&format=json&limit=10&include=musicinfo&groupby=artist_id`
-      );
-      const data = await response.json();
-      if (data.results && data.results.length > 0) {
-        setTracks(data.results);
-      }
-    } catch (error) {
-      console.error('Error loading tracks:', error);
-    } finally {
-      setSearching(false);
-    }
-  };
-
   const searchTracks = async (query) => {
-    if (!query.trim()) {
-      loadDefaultTracks();
-      return;
-    }
+    if (!query.trim()) return;
 
     setSearching(true);
     try {
       const response = await fetch(
-        `https://api.jamendo.com/v3.0/tracks/?client_id=${CLIENT_ID}&format=json&limit=20&search=${encodeURIComponent(query)}&include=musicinfo`
+        `https://musicapi.x007.workers.dev/search?q=${encodeURIComponent(query)}&searchEngine=gaama`
       );
       const data = await response.json();
-      if (data.results && data.results.length > 0) {
-        setTracks(data.results);
+      
+      if (data.status === 200 && data.response && data.response.length > 0) {
+        // Fetch stream URLs for each track
+        const tracksWithUrls = await Promise.all(
+          data.response.slice(0, 20).map(async (track) => {
+            try {
+              const fetchResponse = await fetch(
+                `https://musicapi.x007.workers.dev/fetch?id=${track.id}`
+              );
+              const fetchData = await fetchResponse.json();
+              return {
+                id: track.id,
+                name: track.title,
+                artist_name: 'Unknown Artist',
+                audio: fetchData.response,
+                image: track.img,
+                duration: 180 // Default duration
+              };
+            } catch (err) {
+              return null;
+            }
+          })
+        );
+        
+        const validTracks = tracksWithUrls.filter(t => t !== null);
+        setTracks(validTracks);
         setCurrentTrack(0);
       } else {
         setTracks([]);
       }
     } catch (error) {
       console.error('Error searching tracks:', error);
+      setTracks([]);
     } finally {
       setSearching(false);
     }
@@ -64,7 +67,9 @@ function App() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    searchTracks(searchQuery);
+    if (searchQuery.trim()) {
+      searchTracks(searchQuery);
+    }
   };
 
   useEffect(() => {
@@ -145,20 +150,20 @@ function App() {
           <input
             type="text"
             className="search-input"
-            placeholder="Search for songs, artists..."
+            placeholder="Search for songs, artists... (e.g., Pathaan, Arijit Singh)"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <button type="submit" className="search-button">
+          <button type="submit" className="search-button" disabled={searching}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8" />
               <path d="m21 21-4.35-4.35" />
             </svg>
-            Search
+            {searching ? 'Searching...' : 'Search'}
           </button>
         </form>
 
-        {searching && <div className="loading">Searching...</div>}
+        {searching && <div className="loading">Searching for music...</div>}
 
         {track && (
           <>
@@ -230,7 +235,7 @@ function App() {
             {searchQuery ? `Results for "${searchQuery}"` : 'Popular Tracks'}
           </h3>
           {tracks.length === 0 && !searching && (
-            <div className="no-results">No tracks found. Try a different search.</div>
+            <div className="no-results">No tracks found. Try searching for your favorite songs!</div>
           )}
           {tracks.map((t, index) => (
             <div
