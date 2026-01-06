@@ -9,6 +9,7 @@ function App() {
   const [volume, setVolume] = useState(0.7);
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
+  const [error, setError] = useState('');
   const playerRef = useRef(null);
 
   // YouTube API Key from environment variable
@@ -64,11 +65,22 @@ function App() {
     if (!query.trim()) return;
 
     setSearching(true);
+    setError('');
     try {
-      const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(query + ' music')}&type=video&videoCategoryId=10&key=${YOUTUBE_API_KEY}`
-      );
+      console.log('API Key:', YOUTUBE_API_KEY ? 'Present' : 'Missing');
+      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(query + ' music')}&type=video&videoCategoryId=10&key=${YOUTUBE_API_KEY}`;
+      console.log('Fetching:', url);
+      
+      const response = await fetch(url);
       const data = await response.json();
+      
+      console.log('API Response:', data);
+      
+      if (data.error) {
+        setError(`YouTube API Error: ${data.error.message}`);
+        setTracks([]);
+        return;
+      }
       
       if (data.items && data.items.length > 0) {
         const tracksData = data.items.map((item) => ({
@@ -86,6 +98,7 @@ function App() {
       }
     } catch (error) {
       console.error('Error searching tracks:', error);
+      setError(`Error: ${error.message}`);
       setTracks([]);
     } finally {
       setSearching(false);
@@ -171,6 +184,8 @@ function App() {
         </form>
 
         {searching && <div className="loading">Searching YouTube Music...</div>}
+        
+        {error && <div className="error">{error}</div>}
 
         {track && (
           <>
