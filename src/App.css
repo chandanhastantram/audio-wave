@@ -1,12 +1,14 @@
 :root {
-  --yt-black: #030303;
-  --yt-surface: #212121;
-  --yt-surface-hover: #2a2a2a;
-  --yt-red: #ff0000;
-  --yt-red-hover: #cc0000;
+  --yt-black: #0a0a0a;
+  --yt-surface: #1a1a1a;
+  --yt-surface-hover: #252525;
+  --yt-red: #ff0033;
+  --yt-red-hover: #cc0028;
   --yt-white: #ffffff;
-  --yt-text-secondary: #aaaaaa;
-  --yt-border: #3e3e3e;
+  --yt-text-secondary: #999999;
+  --yt-border: #2a2a2a;
+  --gradient-primary: linear-gradient(135deg, #ff0033 0%, #ff3366 100%);
+  --gradient-accent: linear-gradient(135deg, #ff0033 0%, #9900ff 100%);
 }
 
 * {
@@ -31,12 +33,14 @@ body {
 /* Sidebar */
 .sidebar {
   width: 240px;
-  background: var(--yt-black);
-  border-right: 1px solid var(--yt-border);
+  background: rgba(26, 26, 26, 0.95);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 0, 51, 0.1);
   display: flex;
   flex-direction: column;
   padding: 16px 0;
   transition: transform 0.3s ease;
+  box-shadow: 2px 0 20px rgba(255, 0, 51, 0.05);
 }
 
 .sidebar-header {
@@ -49,12 +53,19 @@ body {
 .logo {
   width: 32px;
   height: 32px;
-  background: var(--yt-red);
+  background: var(--gradient-primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 20px;
+  box-shadow: 0 0 20px rgba(255, 0, 51, 0.4);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 0, 51, 0.4); }
+  50% { box-shadow: 0 0 30px rgba(255, 0, 51, 0.6); }
 }
 
 .app-name {
@@ -78,8 +89,9 @@ body {
 }
 
 .nav-item.active {
-  background: var(--yt-surface);
+  background: linear-gradient(90deg, rgba(255, 0, 51, 0.15) 0%, transparent 100%);
   border-left: 3px solid var(--yt-red);
+  box-shadow: inset 0 0 20px rgba(255, 0, 51, 0.1);
 }
 
 .nav-icon {
@@ -97,8 +109,10 @@ body {
 
 .top-bar {
   padding: 16px 24px;
-  background: var(--yt-black);
-  border-bottom: 1px solid var(--yt-border);
+  background: rgba(10, 10, 10, 0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 0, 51, 0.1);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
 }
 
 .search-container {
@@ -109,17 +123,19 @@ body {
 .search-box {
   width: 100%;
   padding: 12px 48px 12px 16px;
-  background: var(--yt-surface);
-  border: 1px solid var(--yt-border);
+  background: rgba(26, 26, 26, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 0, 51, 0.2);
   border-radius: 24px;
   color: var(--yt-white);
   font-size: 14px;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .search-box:focus {
   border-color: var(--yt-red);
-  background: var(--yt-surface-hover);
+  background: rgba(26, 26, 26, 0.9);
+  box-shadow: 0 0 20px rgba(255, 0, 51, 0.2), inset 0 0 20px rgba(255, 0, 51, 0.05);
 }
 
 .search-box::placeholder {
@@ -208,29 +224,57 @@ body {
 }
 
 .track-card {
-  background: var(--yt-surface);
-  border-radius: 8px;
+  background: rgba(26, 26, 26, 0.6);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
   padding: 16px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.track-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--gradient-accent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
 }
 
 .track-card:hover {
-  background: var(--yt-surface-hover);
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 12px 40px rgba(255, 0, 51, 0.3);
+  border-color: rgba(255, 0, 51, 0.5);
+}
+
+.track-card:hover::before {
+  opacity: 0.1;
 }
 
 .track-card.active {
   border: 2px solid var(--yt-red);
+  background: rgba(255, 0, 51, 0.1);
+  box-shadow: 0 0 30px rgba(255, 0, 51, 0.4), inset 0 0 30px rgba(255, 0, 51, 0.1);
 }
 
 .track-thumbnail {
   width: 100%;
   aspect-ratio: 1;
-  border-radius: 4px;
+  border-radius: 8px;
   object-fit: cover;
   margin-bottom: 12px;
+  transition: transform 0.3s ease;
+}
+
+.track-card:hover .track-thumbnail {
+  transform: scale(1.05);
 }
 
 .track-name {
@@ -252,13 +296,15 @@ body {
 
 /* Bottom Player */
 .bottom-player {
-  background: var(--yt-surface);
-  border-top: 1px solid var(--yt-border);
+  background: rgba(26, 26, 26, 0.98);
+  backdrop-filter: blur(30px);
+  border-top: 1px solid rgba(255, 0, 51, 0.2);
   padding: 12px 16px;
   display: flex;
   align-items: center;
   gap: 16px;
   animation: slideUp 0.3s ease;
+  box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.5), 0 0 40px rgba(255, 0, 51, 0.1);
 }
 
 @keyframes slideUp {
@@ -280,14 +326,18 @@ body {
 .player-thumbnail {
   width: 56px;
   height: 56px;
-  border-radius: 4px;
+  border-radius: 8px;
   object-fit: cover;
   animation: rotate 20s linear infinite;
   animation-play-state: paused;
+  box-shadow: 0 4px 20px rgba(255, 0, 51, 0.3);
+  border: 2px solid rgba(255, 0, 51, 0.3);
 }
 
 .player-thumbnail.playing {
   animation-play-state: running;
+  box-shadow: 0 4px 30px rgba(255, 0, 51, 0.6);
+  border-color: var(--yt-red);
 }
 
 @keyframes rotate {
@@ -358,13 +408,16 @@ body {
 }
 
 .play-button {
-  background: var(--yt-red);
+  background: var(--gradient-primary);
   width: 40px;
   height: 40px;
+  box-shadow: 0 4px 20px rgba(255, 0, 51, 0.4);
 }
 
 .play-button:hover {
-  background: var(--yt-red-hover);
+  background: var(--gradient-primary);
+  box-shadow: 0 6px 30px rgba(255, 0, 51, 0.6);
+  transform: scale(1.15);
 }
 
 .play-button svg {
@@ -401,9 +454,10 @@ body {
 
 .progress-fill {
   height: 100%;
-  background: var(--yt-red);
+  background: var(--gradient-primary);
   border-radius: 2px;
   transition: width 0.1s linear;
+  box-shadow: 0 0 10px rgba(255, 0, 51, 0.5);
 }
 
 .player-right {
