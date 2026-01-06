@@ -6,17 +6,59 @@ function App() {
   const [tracks, setTracks] = useState([]);
   const [currentTrack, setCurrentTrack] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.7);
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
-  const audioRef = useRef(null);
+  const playerRef = useRef(null);
+
+  // YouTube API Key
+  const YOUTUBE_API_KEY = 'AIzaSyA-xsEx80oNfIYNjXBDC6t1IGxwQIQPsvs';
 
   // Load default tracks on mount
   useEffect(() => {
-    searchTracks('popular songs');
+    searchTracks('popular music 2024');
   }, []);
+
+  // Load YouTube IFrame API
+  useEffect(() => {
+    if (!window.YT) {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    }
+
+    window.onYouTubeIframeAPIReady = () => {
+      playerRef.current = new window.YT.Player('youtube-player', {
+        height: '0',
+        width: '0',
+        playerVars: {
+          autoplay: 0,
+          controls: 0,
+        },
+        events: {
+          onReady: onPlayerReady,
+          onStateChange: onPlayerStateChange,
+        },
+      });
+    };
+  }, []);
+
+  const onPlayerReady = (event) => {
+    console.log('Player ready');
+  };
+
+  const onPlayerStateChange = (event) => {
+    if (event.data === window.YT.PlayerState.ENDED) {
+      handleNext();
+    }
+    if (event.data === window.YT.PlayerState.PLAYING) {
+      setIsPlaying(true);
+    }
+    if (event.data === window.YT.PlayerState.PAUSED) {
+      setIsPlaying(false);
+    }
+  };
 
   const searchTracks = async (query) => {
     if (!query.trim()) return;
@@ -24,35 +66,20 @@ function App() {
     setSearching(true);
     try {
       const response = await fetch(
-        `https://musicapi.x007.workers.dev/search?q=${encodeURIComponent(query)}&searchEngine=gaama`
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(query + ' music')}&type=video&videoCategoryId=10&key=${YOUTUBE_API_KEY}`
       );
       const data = await response.json();
       
-      if (data.status === 200 && data.response && data.response.length > 0) {
-        // Fetch stream URLs for each track
-        const tracksWithUrls = await Promise.all(
-          data.response.slice(0, 20).map(async (track) => {
-            try {
-              const fetchResponse = await fetch(
-                `https://musicapi.x007.workers.dev/fetch?id=${track.id}`
-              );
-              const fetchData = await fetchResponse.json();
-              return {
-                id: track.id,
-                name: track.title,
-                artist_name: 'Unknown Artist',
-                audio: fetchData.response,
-                image: track.img,
-                duration: 180 // Default duration
-              };
-            } catch (err) {
-              return null;
-            }
-          })
-        );
+      if (data.items && data.items.length > 0) {
+        const tracksData = data.items.map((item) => ({
+          id: item.id.videoId,
+          name: item.snippet.title,
+          artist_name: item.snippet.channelTitle,
+          image: item.snippet.thumbnails.medium.url,
+          duration: 0,
+        }));
         
-        const validTracks = tracksWithUrls.filter(t => t !== null);
-        setTracks(validTracks);
+        setTracks(tracksData);
         setCurrentTrack(0);
       } else {
         setTracks([]);
@@ -72,74 +99,54 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || !tracks[currentTrack]) return;
-
-    const updateTime = () => setCurrentTime(audio.currentTime);
-    const updateDuration = () => setDuration(audio.duration);
-    const handleEnded = () => handleNext();
-
-    audio.addEventListener('timeupdate', updateTime);
-    audio.addEventListener('loadedmetadata', updateDuration);
-    audio.addEventListener('ended', handleEnded);
-
-    return () => {
-      audio.removeEventListener('timeupdate', updateTime);
-      audio.removeEventListener('loadedmetadata', updateDuration);
-      audio.removeEventListener('ended', handleEnded);
-    };
-  }, [currentTrack, tracks]);
-
   const handlePlayPause = () => {
-    const audio = audioRef.current;
-    if (!audio || !tracks[currentTrack]) return;
+    if (!playerRef.current || !tracks[currentTrack]) return;
 
     if (isPlaying) {
-      audio.pause();
+      playerRef.current.pauseVideo();
+      setIsPlaying(false);
     } else {
-      audio.play().catch(err => console.error('Play error:', err));
+      playerRef.current.playVideo();
+      setIsPlaying(true);
     }
-    setIsPlaying(!isPlaying);
   };
 
   const handleNext = () => {
     if (tracks.length === 0) return;
-    setCurrentTrack((prev) => (prev + 1) % tracks.length);
-    setIsPlaying(true);
-    setTimeout(() => audioRef.current?.play().catch(err => console.error('Play error:', err)), 100);
+    const nextTrack = (currentTrack + 1) % tracks.length;
+    setCurrentTrack(nextTrack);
+    loadAndPlay(nextTrack);
   };
 
   const handlePrevious = () => {
     if (tracks.length === 0) return;
-    setCurrentTrack((prev) => (prev - 1 + tracks.length) % tracks.length);
-    setIsPlaying(true);
-    setTimeout(() => audioRef.current?.play().catch(err => console.error('Play error:', err)), 100);
+    const prevTrack = (currentTrack - 1 + tracks.length) % tracks.length;
+    setCurrentTrack(prevTrack);
+    loadAndPlay(prevTrack);
   };
 
-  const handleSeek = (e) => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.currentTime = e.target.value;
-    setCurrentTime(e.target.value);
+  const loadAndPlay = (index) => {
+    if (!playerRef.current || !tracks[index]) return;
+    playerRef.current.loadVideoById(tracks[index].id);
+    setIsPlaying(true);
   };
 
   const handleVolumeChange = (e) => {
-    const newVolume = e.target.value;
+    const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume;
+    if (playerRef.current) {
+      playerRef.current.setVolume(newVolume * 100);
     }
   };
 
-  const formatTime = (time) => {
-    if (!time || isNaN(time)) return '0:00';
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-
   const track = tracks[currentTrack];
+
+  // Watch for track changes
+  useEffect(() => {
+    if (track && playerRef.current && playerRef.current.loadVideoById) {
+      playerRef.current.loadVideoById(track.id);
+    }
+  }, [currentTrack]);
 
   return (
     <div className="app">
@@ -150,7 +157,7 @@ function App() {
           <input
             type="text"
             className="search-input"
-            placeholder="Search for songs, artists... (e.g., Pathaan, Arijit Singh)"
+            placeholder="Search for songs, artists... (e.g., The Weeknd, Arijit Singh)"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -163,28 +170,17 @@ function App() {
           </button>
         </form>
 
-        {searching && <div className="loading">Searching for music...</div>}
+        {searching && <div className="loading">Searching YouTube Music...</div>}
 
         {track && (
           <>
-            <Visualizer audioElement={audioRef.current} isPlaying={isPlaying} />
+            <div className="track-display">
+              <img src={track.image} alt={track.name} className="track-image" />
+            </div>
 
             <div className="track-info">
               <h2 className="track-title">{track.name}</h2>
               <p className="track-artist">{track.artist_name}</p>
-            </div>
-
-            <div className="progress-section">
-              <span className="time">{formatTime(currentTime)}</span>
-              <input
-                type="range"
-                min="0"
-                max={duration || 0}
-                value={currentTime}
-                onChange={handleSeek}
-                className="progress-bar"
-              />
-              <span className="time">{formatTime(duration)}</span>
             </div>
 
             <div className="controls">
@@ -232,7 +228,7 @@ function App() {
 
         <div className="playlist">
           <h3 className="playlist-title">
-            {searchQuery ? `Results for "${searchQuery}"` : 'Popular Tracks'}
+            {searchQuery ? `Results for "${searchQuery}"` : 'Popular Music'}
           </h3>
           {tracks.length === 0 && !searching && (
             <div className="no-results">No tracks found. Try searching for your favorite songs!</div>
@@ -243,20 +239,20 @@ function App() {
               className={`playlist-item ${index === currentTrack ? 'active' : ''}`}
               onClick={() => {
                 setCurrentTrack(index);
-                setIsPlaying(true);
-                setTimeout(() => audioRef.current?.play().catch(err => console.error('Play error:', err)), 100);
+                loadAndPlay(index);
               }}
             >
+              <img src={t.image} alt={t.name} className="playlist-item-image" />
               <div className="playlist-item-info">
                 <div className="playlist-item-title">{t.name}</div>
                 <div className="playlist-item-artist">{t.artist_name}</div>
               </div>
-              <div className="playlist-item-duration">{formatTime(t.duration)}</div>
             </div>
           ))}
         </div>
 
-        {track && <audio ref={audioRef} src={track.audio} crossOrigin="anonymous" />}
+        {/* Hidden YouTube Player */}
+        <div id="youtube-player" style={{ display: 'none' }}></div>
       </div>
     </div>
   );
