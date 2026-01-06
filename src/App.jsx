@@ -11,8 +11,8 @@ function App() {
   const [searching, setSearching] = useState(false);
   const playerRef = useRef(null);
 
-  // YouTube API Key
-  const YOUTUBE_API_KEY = 'AIzaSyA-xsEx80oNfIYNjXBDC6t1IGxwQIQPsvs';
+  // YouTube API Key from environment variable
+  const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 
   // Load default tracks on mount
   useEffect(() => {
